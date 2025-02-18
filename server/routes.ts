@@ -2,7 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertWorkoutSchema, insertExerciseSchema } from "@shared/schema";
+import { insertWorkoutSchema, insertExerciseSchema, insertRunSchema } from "@shared/schema";
+import { startOfWeek, endOfWeek } from "date-fns";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -10,7 +11,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Workout routes
   app.post("/api/workouts", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    
+
     const workout = insertWorkoutSchema.parse(req.body);
     const newWorkout = await storage.createWorkout(req.user.id, workout);
     res.status(201).json(newWorkout);
@@ -18,7 +19,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/workouts", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    
+
     const workouts = await storage.getWorkouts(req.user.id);
     res.json(workouts);
   });
@@ -26,14 +27,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Exercise routes
   app.post("/api/workouts/:workoutId/exercises", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    
+
     const workoutId = parseInt(req.params.workoutId);
     const workout = await storage.getWorkout(workoutId);
-    
+
     if (!workout || workout.userId !== req.user.id) {
       return res.sendStatus(404);
     }
-    
+
     const exercise = insertExerciseSchema.parse(req.body);
     const newExercise = await storage.createExercise(workoutId, exercise);
     res.status(201).json(newExercise);
@@ -41,16 +42,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/workouts/:workoutId/exercises", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    
+
     const workoutId = parseInt(req.params.workoutId);
     const workout = await storage.getWorkout(workoutId);
-    
+
     if (!workout || workout.userId !== req.user.id) {
       return res.sendStatus(404);
     }
-    
+
     const exercises = await storage.getExercises(workoutId);
     res.json(exercises);
+  });
+
+  // Run routes
+  app.post("/api/runs", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const run = insertRunSchema.parse(req.body);
+    const newRun = await storage.createRun(req.user.id, run);
+    res.status(201).json(newRun);
+  });
+
+  app.get("/api/runs/week", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const now = new Date();
+    const start = startOfWeek(now);
+    const end = endOfWeek(now);
+
+    const runs = await storage.getRuns(req.user.id, start, end);
+    const totalDistance = runs.reduce((sum, run) => sum + run.distance, 0);
+
+    res.json({
+      runs,
+      totalDistance,
+      startDate: start,
+      endDate: end
+    });
   });
 
   const httpServer = createServer(app);

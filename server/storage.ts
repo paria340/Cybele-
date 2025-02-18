@@ -1,7 +1,7 @@
-import { User, InsertUser, Workout, Exercise, InsertWorkout, InsertExercise } from "@shared/schema";
-import { users, workouts, exercises } from "@shared/schema";
+import { User, InsertUser, Workout, Exercise, InsertWorkout, InsertExercise, Run, InsertRun } from "@shared/schema";
+import { users, workouts, exercises, runs } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, and, gte, lte } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -19,6 +19,9 @@ export interface IStorage {
 
   createExercise(workoutId: number, exercise: InsertExercise): Promise<Exercise>;
   getExercises(workoutId: number): Promise<Exercise[]>;
+
+  createRun(userId: number, run: InsertRun): Promise<Run>;
+  getRuns(userId: number, startDate: Date, endDate: Date): Promise<Run[]>;
 
   sessionStore: session.Store;
 }
@@ -75,6 +78,27 @@ export class DatabaseStorage implements IStorage {
 
   async getExercises(workoutId: number): Promise<Exercise[]> {
     return await db.select().from(exercises).where(eq(exercises.workoutId, workoutId));
+  }
+
+  async createRun(userId: number, run: InsertRun): Promise<Run> {
+    const [newRun] = await db
+      .insert(runs)
+      .values({ ...run, userId })
+      .returning();
+    return newRun;
+  }
+
+  async getRuns(userId: number, startDate: Date, endDate: Date): Promise<Run[]> {
+    return await db
+      .select()
+      .from(runs)
+      .where(
+        and(
+          eq(runs.userId, userId),
+          gte(runs.date, startDate),
+          lte(runs.date, endDate)
+        )
+      );
   }
 }
 

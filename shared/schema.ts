@@ -27,6 +27,13 @@ export const exercises = pgTable("exercises", {
   weight: integer("weight").notNull(),
 });
 
+export const runs = pgTable("runs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  distance: integer("distance").notNull(), // in kilometers
+  date: timestamp("date").notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -47,9 +54,16 @@ export const insertExerciseSchema = createInsertSchema(exercises).pick({
   weight: true,
 });
 
+export const insertRunSchema = createInsertSchema(runs).pick({
+  distance: true,
+  date: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type Workout = typeof workouts.$inferSelect;
 export type Exercise = typeof exercises.$inferSelect;
+export type Run = typeof runs.$inferSelect;
 export type InsertWorkout = z.infer<typeof insertWorkoutSchema>;
 export type InsertExercise = z.infer<typeof insertExerciseSchema>;
+export type InsertRun = z.infer<typeof insertRunSchema>;
