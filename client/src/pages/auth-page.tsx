@@ -10,6 +10,7 @@ import { Redirect } from "wouter";
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Timer, Trophy, Activity } from "lucide-react";
+import { format } from "date-fns";
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
@@ -28,7 +29,7 @@ export default function AuthPage() {
       username: "",
       password: "",
       fullName: "",
-      dateOfBirth: new Date(),
+      dateOfBirth: format(new Date(), "yyyy-MM-dd"),
       targetDistance: 5,
     },
   });
@@ -145,9 +146,7 @@ export default function AuthPage() {
                     <Input
                       id="register-dateOfBirth"
                       type="date"
-                      {...registerForm.register("dateOfBirth", {
-                        valueAsDate: true,
-                      })}
+                      {...registerForm.register("dateOfBirth")}
                       className="w-full"
                     />
                   </div>
