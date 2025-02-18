@@ -1,87 +1,81 @@
 import { User, InsertUser, Workout, Exercise, InsertWorkout, InsertExercise } from "@shared/schema";
+import { users, workouts, exercises } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 import session from "express-session";
-import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
 
-const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   createWorkout(userId: number, workout: InsertWorkout): Promise<Workout>;
   getWorkouts(userId: number): Promise<Workout[]>;
   getWorkout(id: number): Promise<Workout | undefined>;
-  
+
   createExercise(workoutId: number, exercise: InsertExercise): Promise<Exercise>;
   getExercises(workoutId: number): Promise<Exercise[]>;
-  
+
   sessionStore: session.Store;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private workouts: Map<number, Workout>;
-  private exercises: Map<number, Exercise>;
-  private currentId: { user: number; workout: number; exercise: number };
+export class DatabaseStorage implements IStorage {
   readonly sessionStore: session.Store;
 
   constructor() {
-    this.users = new Map();
-    this.workouts = new Map();
-    this.exercises = new Map();
-    this.currentId = { user: 1, workout: 1, exercise: 1 };
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000,
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true,
     });
   }
 
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentId.user++;
-    const user = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
   async createWorkout(userId: number, workout: InsertWorkout): Promise<Workout> {
-    const id = this.currentId.workout++;
-    const newWorkout = { ...workout, id, userId };
-    this.workouts.set(id, newWorkout);
+    const [newWorkout] = await db
+      .insert(workouts)
+      .values({ ...workout, userId })
+      .returning();
     return newWorkout;
   }
 
   async getWorkouts(userId: number): Promise<Workout[]> {
-    return Array.from(this.workouts.values()).filter(
-      (workout) => workout.userId === userId,
-    );
+    return await db.select().from(workouts).where(eq(workouts.userId, userId));
   }
 
   async getWorkout(id: number): Promise<Workout | undefined> {
-    return this.workouts.get(id);
+    const [workout] = await db.select().from(workouts).where(eq(workouts.id, id));
+    return workout;
   }
 
   async createExercise(workoutId: number, exercise: InsertExercise): Promise<Exercise> {
-    const id = this.currentId.exercise++;
-    const newExercise = { ...exercise, id, workoutId };
-    this.exercises.set(id, newExercise);
+    const [newExercise] = await db
+      .insert(exercises)
+      .values({ ...exercise, workoutId })
+      .returning();
     return newExercise;
   }
 
   async getExercises(workoutId: number): Promise<Exercise[]> {
-    return Array.from(this.exercises.values()).filter(
-      (exercise) => exercise.workoutId === workoutId,
-    );
+    return await db.select().from(exercises).where(eq(exercises.workoutId, workoutId));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
