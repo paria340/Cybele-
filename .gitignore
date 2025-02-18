@@ -7,3 +7,8 @@ vite.config.ts.*
 .env
 coverage
 *.log
+.upm
+.replit
+.breakpoints
+.local
+.cache
