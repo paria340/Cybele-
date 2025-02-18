@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -6,6 +6,9 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  fullName: text("full_name").notNull(),
+  dateOfBirth: date("date_of_birth").notNull(),
+  targetDistance: integer("target_distance").notNull(), // in kilometers
 });
 
 export const workouts = pgTable("workouts", {
@@ -27,6 +30,9 @@ export const exercises = pgTable("exercises", {
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+  fullName: true,
+  dateOfBirth: true,
+  targetDistance: true,
 });
 
 export const insertWorkoutSchema = createInsertSchema(workouts).pick({

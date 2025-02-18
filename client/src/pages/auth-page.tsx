@@ -15,11 +15,21 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
 
-  const form = useForm<InsertUser>({
+  const loginForm = useForm<Pick<InsertUser, "username" | "password">>({
+    defaultValues: {
+      username: "",
+      password: "",
+    },
+  });
+
+  const registerForm = useForm<InsertUser>({
     resolver: zodResolver(insertUserSchema),
     defaultValues: {
       username: "",
       password: "",
+      fullName: "",
+      dateOfBirth: new Date(),
+      targetDistance: 5,
     },
   });
 
@@ -27,11 +37,11 @@ export default function AuthPage() {
     return <Redirect to="/" />;
   }
 
-  const onSubmit = async (data: InsertUser) => {
+  const onSubmit = async (data: InsertUser | Pick<InsertUser, "username" | "password">) => {
     if (activeTab === "login") {
-      await loginMutation.mutateAsync(data);
+      await loginMutation.mutateAsync(data as Pick<InsertUser, "username" | "password">);
     } else {
-      await registerMutation.mutateAsync(data);
+      await registerMutation.mutateAsync(data as InsertUser);
     }
   };
 
@@ -63,39 +73,111 @@ export default function AuthPage() {
                 <TabsTrigger value="register">Register</TabsTrigger>
               </TabsList>
 
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input
-                    id="username"
-                    {...form.register("username")}
-                    className="w-full"
-                    placeholder="Enter your username"
-                  />
-                </div>
+              {activeTab === "login" ? (
+                <form onSubmit={loginForm.handleSubmit(onSubmit)} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-username">Username</Label>
+                    <Input
+                      id="login-username"
+                      {...loginForm.register("username")}
+                      className="w-full"
+                      placeholder="Enter your username"
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    {...form.register("password")}
-                    className="w-full"
-                    placeholder="Enter your password"
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password">Password</Label>
+                    <Input
+                      id="login-password"
+                      type="password"
+                      {...loginForm.register("password")}
+                      className="w-full"
+                      placeholder="Enter your password"
+                    />
+                  </div>
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={loginMutation.isPending || registerMutation.isPending}
-                >
-                  {(loginMutation.isPending || registerMutation.isPending) && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  {activeTab === "login" ? "Login" : "Create Account"}
-                </Button>
-              </form>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={loginMutation.isPending}
+                  >
+                    {loginMutation.isPending && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Login
+                  </Button>
+                </form>
+              ) : (
+                <form onSubmit={registerForm.handleSubmit(onSubmit)} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="register-username">Username</Label>
+                    <Input
+                      id="register-username"
+                      {...registerForm.register("username")}
+                      className="w-full"
+                      placeholder="Choose a username"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="register-password">Password</Label>
+                    <Input
+                      id="register-password"
+                      type="password"
+                      {...registerForm.register("password")}
+                      className="w-full"
+                      placeholder="Choose a password"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="register-fullName">Full Name</Label>
+                    <Input
+                      id="register-fullName"
+                      {...registerForm.register("fullName")}
+                      className="w-full"
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="register-dateOfBirth">Date of Birth</Label>
+                    <Input
+                      id="register-dateOfBirth"
+                      type="date"
+                      {...registerForm.register("dateOfBirth", {
+                        valueAsDate: true,
+                      })}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="register-targetDistance">Target Distance (km)</Label>
+                    <Input
+                      id="register-targetDistance"
+                      type="number"
+                      {...registerForm.register("targetDistance", {
+                        valueAsNumber: true,
+                      })}
+                      className="w-full"
+                      placeholder="Enter your target distance"
+                      min={1}
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={registerMutation.isPending}
+                  >
+                    {registerMutation.isPending && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    Create Account
+                  </Button>
+                </form>
+              )}
             </Tabs>
           </CardContent>
         </Card>
