@@ -67,7 +67,10 @@ export default function RunsPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          distance: Math.round(data.distance), // Ensure distance is an integer
+        }),
       });
       return response.json();
     },
@@ -89,6 +92,14 @@ export default function RunsPage() {
   });
 
   const onSubmit = form.handleSubmit((data) => {
+    if (isNaN(data.distance) || data.distance <= 0) {
+      toast({
+        title: "Invalid distance",
+        description: "Please enter a valid distance greater than 0.",
+        variant: "destructive",
+      });
+      return;
+    }
     addRun.mutate(data);
   });
 
@@ -150,10 +161,15 @@ export default function RunsPage() {
                       <FormControl>
                         <Input
                           type="number"
-                          step="0.1"
+                          step="1"
+                          min="1"
                           placeholder="Enter distance in kilometers"
                           {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                          onChange={(e) => {
+                            const value = e.target.value ? parseInt(e.target.value) : 0;
+                            field.onChange(value);
+                          }}
+                          value={field.value || ''}
                         />
                       </FormControl>
                       <FormMessage />
