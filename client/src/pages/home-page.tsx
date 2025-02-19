@@ -239,7 +239,12 @@ export default function HomePage() {
           {/* Workouts Section */}
           <div>
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-3xl font-bold">Your Workouts</h2>
+              <div>
+                <h2 className="text-3xl font-bold">Today's Workouts</h2>
+                <p className="text-muted-foreground mt-1">
+                  {format(new Date(), 'EEEE, MMMM d, yyyy')}
+                </p>
+              </div>
               <Dialog open={workoutDialogOpen} onOpenChange={setWorkoutDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>
@@ -294,17 +299,31 @@ export default function HomePage() {
               </Dialog>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
-              {workouts?.map((workout: Workout) => (
-                <WorkoutCard
-                  key={workout.id}
-                  workout={workout}
-                  onAddExercise={onSubmitExercise}
-                  onDelete={() => deleteWorkoutMutation.mutate(workout.id)}
-                  exerciseForm={exerciseForm}
-                />
-              ))}
-            </div>
+            {workouts?.length === 0 ? (
+              <Card className="p-8 text-center">
+                <CardContent>
+                  <p className="text-muted-foreground mb-4">No workouts scheduled for today</p>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Schedule a Workout
+                    </Button>
+                  </DialogTrigger>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+                {workouts?.map((workout: Workout) => (
+                  <WorkoutCard
+                    key={workout.id}
+                    workout={workout}
+                    onAddExercise={onSubmitExercise}
+                    onDelete={() => deleteWorkoutMutation.mutate(workout.id)}
+                    exerciseForm={exerciseForm}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Running Progress Section */}

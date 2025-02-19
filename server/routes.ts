@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertWorkoutSchema, insertExerciseSchema, insertRunSchema } from "@shared/schema";
-import { startOfWeek, endOfWeek, parseISO } from "date-fns";
+import { startOfDay, endOfDay, startOfWeek, endOfWeek, parseISO } from "date-fns";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -35,7 +35,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const runs = await storage.getRuns(req.user.id, start, end);
       console.log("Weekly runs:", runs);
 
-      // Ensure proper number calculation for total distance
       const totalDistance = runs.reduce((sum, run) => {
         const distance = typeof run.distance === 'number' ? run.distance : 0;
         return sum + distance;
@@ -71,8 +70,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/workouts", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
-    const workouts = await storage.getWorkouts(req.user.id);
-    res.json(workouts);
+    const today = new Date();
+    const start = startOfDay(today);
+    const end = endOfDay(today);
+
+    try {
+      const workouts = await storage.getWorkoutsForDay(req.user.id, start, end);
+      res.json(workouts);
+    } catch (error) {
+      console.error("Error fetching workouts:", error);
+      res.status(500).json({ error: "Failed to fetch workouts" });
+    }
   });
 
   app.post("/api/workouts/:workoutId/exercises", async (req, res) => {
