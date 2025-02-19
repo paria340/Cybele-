@@ -25,6 +25,7 @@ export default function HomePage() {
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
   const [date] = useState(new Date());
+  const [workoutDialogOpen, setWorkoutDialogOpen] = useState(false);
 
   // Workouts Query
   const { data: workouts, isLoading: isLoadingWorkouts } = useQuery({
@@ -96,6 +97,7 @@ export default function HomePage() {
         description: "Your new workout has been added.",
       });
       workoutForm.reset();
+      setWorkoutDialogOpen(false); // Close the dialog after successful creation
     },
     onError: (error) => {
       toast({
@@ -238,7 +240,7 @@ export default function HomePage() {
           <div>
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-3xl font-bold">Your Workouts</h2>
-              <Dialog>
+              <Dialog open={workoutDialogOpen} onOpenChange={setWorkoutDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>
                     <Plus className="h-4 w-4 mr-2" />
