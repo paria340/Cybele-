@@ -128,7 +128,7 @@ export default function HomePage() {
 
   const addRunMutation = useMutation({
     mutationFn: async (data: { distance: number; date: string }) => {
-      if (!data.distance || data.distance <= 0) {
+      if (isNaN(data.distance) || data.distance <= 0) {
         throw new Error("Distance must be greater than 0");
       }
 
@@ -351,10 +351,15 @@ export default function HomePage() {
                           <FormControl>
                             <Input
                               type="number"
-                              step="0.1"
+                              step="1"
+                              min="1"
                               placeholder="Enter distance in kilometers"
                               {...field}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                              onChange={(e) => {
+                                const value = e.target.value ? parseInt(e.target.value, 10) : 0;
+                                field.onChange(value);
+                              }}
+                              value={field.value || ""}
                             />
                           </FormControl>
                           <FormMessage />
