@@ -128,12 +128,19 @@ export default function HomePage() {
 
   const addRunMutation = useMutation({
     mutationFn: async (data: { distance: number; date: string }) => {
+      if (!data.distance || data.distance <= 0) {
+        throw new Error("Distance must be greater than 0");
+      }
+
       const response = await apiRequest("/api/runs", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          distance: Math.round(data.distance),
+          date: new Date().toISOString(),
+        }),
       });
       return response.json();
     },
@@ -145,10 +152,10 @@ export default function HomePage() {
       });
       runForm.reset();
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error adding run",
-        description: "Please try again.",
+        description: error.message || "Please try again.",
         variant: "destructive",
       });
     },
@@ -188,6 +195,14 @@ export default function HomePage() {
   };
 
   const onSubmitRun = runForm.handleSubmit((data) => {
+    if (isNaN(data.distance) || data.distance <= 0) {
+      toast({
+        title: "Invalid distance",
+        description: "Please enter a valid distance greater than 0.",
+        variant: "destructive",
+      });
+      return;
+    }
     addRunMutation.mutate(data);
   });
 
