@@ -85,6 +85,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  app.delete("/api/workouts/:workoutId", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const workoutId = parseInt(req.params.workoutId);
+    const workout = await storage.getWorkout(workoutId);
+
+    if (!workout || workout.userId !== req.user.id) {
+      return res.sendStatus(404);
+    }
+
+    await storage.deleteWorkout(workoutId);
+    res.sendStatus(200);
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

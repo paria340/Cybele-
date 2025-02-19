@@ -16,7 +16,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertWorkoutSchema, insertExerciseSchema, insertRunSchema, type InsertWorkout, type InsertExercise, type Workout, type Exercise, type Run } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { LogOut, Plus, DumbbellIcon, Loader2 } from "lucide-react";
+import { LogOut, Plus, DumbbellIcon, Loader2, Trash as TrashIcon } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
@@ -153,6 +153,29 @@ export default function HomePage() {
     },
   });
 
+  const deleteWorkoutMutation = useMutation({
+    mutationFn: async (workoutId: number) => {
+      await apiRequest(`/api/workouts/${workoutId}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/workouts"] });
+      toast({
+        title: "Workout deleted",
+        description: "Your workout has been deleted successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error deleting workout",
+        description: error.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+
   const onSubmitWorkout = workoutForm.handleSubmit((data) => {
     createWorkoutMutation.mutate(data);
   });
@@ -240,6 +263,7 @@ export default function HomePage() {
                   key={workout.id}
                   workout={workout}
                   onAddExercise={onSubmitExercise}
+                  onDelete={() => deleteWorkoutMutation.mutate(workout.id)}
                   exerciseForm={exerciseForm}
                 />
               ))}
@@ -324,10 +348,11 @@ export default function HomePage() {
 interface WorkoutCardProps {
   workout: Workout;
   onAddExercise: (workoutId: number) => Promise<void>;
+  onDelete: () => void;
   exerciseForm: any;
 }
 
-function WorkoutCard({ workout, onAddExercise, exerciseForm }: WorkoutCardProps) {
+function WorkoutCard({ workout, onAddExercise, onDelete, exerciseForm }: WorkoutCardProps) {
   const { data: exercises } = useQuery({
     queryKey: [`/api/workouts/${workout.id}/exercises`],
     queryFn: async () => {
@@ -339,9 +364,20 @@ function WorkoutCard({ workout, onAddExercise, exerciseForm }: WorkoutCardProps)
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{workout.name}</CardTitle>
-        <div className="text-sm text-muted-foreground">
-          {format(new Date(workout.date), "PPP")}
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle>{workout.name}</CardTitle>
+            <div className="text-sm text-muted-foreground">
+              {format(new Date(workout.date), "PPP")}
+            </div>
+          </div>
+          <Button 
+            variant="destructive" 
+            size="icon"
+            onClick={onDelete}
+          >
+            <TrashIcon className="h-4 w-4" />
+          </Button>
         </div>
       </CardHeader>
       <CardContent>
