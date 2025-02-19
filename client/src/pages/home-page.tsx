@@ -319,7 +319,7 @@ export default function HomePage() {
             </Card>
 
             {/* Add Run Form */}
-            <Card>
+            <Card className="relative">
               <CardHeader>
                 <CardTitle>Log Today's Run</CardTitle>
                 <CardDescription>Enter the distance you've run</CardDescription>
