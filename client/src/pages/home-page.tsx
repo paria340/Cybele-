@@ -13,15 +13,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertWorkoutSchema, insertExerciseSchema, type InsertWorkout, type InsertExercise } from "@shared/schema";
+import { insertWorkoutSchema, insertExerciseSchema, type InsertWorkout, type InsertExercise, type Workout, type Exercise } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { LogOut, Plus, DumbbellIcon, Loader2 } from "lucide-react";
+import { SiStrava } from "react-icons/si";
 import { format } from "date-fns";
+import { Link } from "wouter";
 
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
   const { data: workouts, isLoading: isLoadingWorkouts } = useQuery({
     queryKey: ["/api/workouts"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/workouts");
+      return response.json();
+    }
   });
 
   const workoutForm = useForm<InsertWorkout>({
@@ -44,7 +50,10 @@ export default function HomePage() {
 
   const createWorkoutMutation = useMutation({
     mutationFn: async (data: InsertWorkout) => {
-      const res = await apiRequest("POST", "/api/workouts", data);
+      const res = await apiRequest("/api/workouts", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
       return res.json();
     },
     onSuccess: () => {
@@ -54,7 +63,10 @@ export default function HomePage() {
 
   const createExerciseMutation = useMutation({
     mutationFn: async ({ workoutId, exercise }: { workoutId: number; exercise: InsertExercise }) => {
-      const res = await apiRequest("POST", `/api/workouts/${workoutId}/exercises`, exercise);
+      const res = await apiRequest(`/api/workouts/${workoutId}/exercises`, {
+        method: "POST",
+        body: JSON.stringify(exercise),
+      });
       return res.json();
     },
     onSuccess: (_, { workoutId }) => {
@@ -90,6 +102,12 @@ export default function HomePage() {
             <h1 className="text-2xl font-bold">Cybele</h1>
           </div>
           <div className="flex items-center gap-4">
+            <Link href="/runs">
+              <Button variant="outline" className="gap-2">
+                <SiStrava className="h-4 w-4" />
+                Running Tracker
+              </Button>
+            </Link>
             <span>Welcome, {user?.username}</span>
             <Button variant="outline" onClick={() => logoutMutation.mutate()}>
               <LogOut className="h-4 w-4 mr-2" />
@@ -127,7 +145,7 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {workouts?.map((workout) => (
+          {workouts?.map((workout: Workout) => (
             <WorkoutCard
               key={workout.id}
               workout={workout}
@@ -141,9 +159,19 @@ export default function HomePage() {
   );
 }
 
-function WorkoutCard({ workout, onAddExercise, exerciseForm }) {
+interface WorkoutCardProps {
+  workout: Workout;
+  onAddExercise: (workoutId: number) => Promise<void>;
+  exerciseForm: any; // TODO: Type this properly with react-hook-form types
+}
+
+function WorkoutCard({ workout, onAddExercise, exerciseForm }: WorkoutCardProps) {
   const { data: exercises } = useQuery({
     queryKey: [`/api/workouts/${workout.id}/exercises`],
+    queryFn: async () => {
+      const response = await apiRequest(`/api/workouts/${workout.id}/exercises`);
+      return response.json();
+    }
   });
 
   return (
@@ -156,7 +184,7 @@ function WorkoutCard({ workout, onAddExercise, exerciseForm }) {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {exercises?.map((exercise) => (
+          {exercises?.map((exercise: Exercise) => (
             <div
               key={exercise.id}
               className="flex items-center justify-between p-3 bg-muted rounded-lg"
