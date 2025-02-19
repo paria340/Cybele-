@@ -45,6 +45,8 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const insertWorkoutSchema = createInsertSchema(workouts).pick({
   date: true,
   name: true,
+}).extend({
+  date: z.coerce.date(),
 });
 
 export const insertExerciseSchema = createInsertSchema(exercises).pick({

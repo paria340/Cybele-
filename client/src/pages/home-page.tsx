@@ -84,10 +84,7 @@ export default function HomePage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          name: data.name,
-          date: format(data.date, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"),
-        }),
+        body: JSON.stringify(data),
       });
       return res.json();
     },
@@ -323,7 +320,7 @@ export default function HomePage() {
   );
 }
 
-// WorkoutCard component remains unchanged
+// WorkoutCard component
 interface WorkoutCardProps {
   workout: Workout;
   onAddExercise: (workoutId: number) => Promise<void>;

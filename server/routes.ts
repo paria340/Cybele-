@@ -3,18 +3,22 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertWorkoutSchema, insertExerciseSchema, insertRunSchema } from "@shared/schema";
-import { startOfWeek, endOfWeek } from "date-fns";
+import { startOfWeek, endOfWeek, parseISO } from "date-fns";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
-  // Workout routes
   app.post("/api/workouts", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
-    const workout = insertWorkoutSchema.parse(req.body);
-    const newWorkout = await storage.createWorkout(req.user.id, workout);
-    res.status(201).json(newWorkout);
+    try {
+      const workout = insertWorkoutSchema.parse(req.body);
+      const newWorkout = await storage.createWorkout(req.user.id, workout);
+      res.status(201).json(newWorkout);
+    } catch (error) {
+      console.error("Error creating workout:", error);
+      res.status(400).json({ error: "Invalid workout data" });
+    }
   });
 
   app.get("/api/workouts", async (req, res) => {
