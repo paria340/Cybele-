@@ -16,6 +16,7 @@ export const workouts = pgTable("workouts", {
   userId: integer("user_id").notNull(),
   date: timestamp("date").notNull(),
   name: text("name").notNull(),
+  duration: integer("duration").notNull(), // in minutes
 });
 
 export const exercises = pgTable("exercises", {
@@ -45,6 +46,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const insertWorkoutSchema = createInsertSchema(workouts).pick({
   date: true,
   name: true,
+  duration: true,
 }).extend({
   date: z.coerce.date(),
 });

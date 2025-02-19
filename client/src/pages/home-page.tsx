@@ -55,6 +55,7 @@ export default function HomePage() {
     defaultValues: {
       name: "",
       date: new Date(),
+      duration: 30, // Default to 30 minutes
     },
   });
 
@@ -248,6 +249,25 @@ export default function HomePage() {
                           </FormItem>
                         )}
                       />
+                      <FormField
+                        control={workoutForm.control}
+                        name="duration"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Duration (minutes)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                min="1"
+                                placeholder="Enter workout duration" 
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                       <Button type="submit" className="w-full">
                         Create Workout
                       </Button>
@@ -367,8 +387,9 @@ function WorkoutCard({ workout, onAddExercise, onDelete, exerciseForm }: Workout
         <div className="flex justify-between items-start">
           <div>
             <CardTitle>{workout.name}</CardTitle>
-            <div className="text-sm text-muted-foreground">
-              {format(new Date(workout.date), "PPP")}
+            <div className="text-sm text-muted-foreground space-y-1">
+              <div>{format(new Date(workout.date), "PPP")}</div>
+              <div>{workout.duration} minutes</div>
             </div>
           </div>
           <Button 
