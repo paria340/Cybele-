@@ -61,6 +61,9 @@ export const insertExerciseSchema = createInsertSchema(exercises).pick({
 export const insertRunSchema = createInsertSchema(runs).pick({
   distance: true,
   date: true,
+}).extend({
+  date: z.coerce.date(),
+  distance: z.coerce.number().int().positive()
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

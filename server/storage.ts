@@ -87,15 +87,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createRun(userId: number, run: InsertRun): Promise<Run> {
+    console.log("Creating run with data:", { userId, run });
     const [newRun] = await db
       .insert(runs)
       .values({ ...run, userId })
       .returning();
+    console.log("Created run:", newRun);
     return newRun;
   }
 
   async getRuns(userId: number, startDate: Date, endDate: Date): Promise<Run[]> {
-    return await db
+    console.log("Fetching runs for user:", userId, "between:", startDate, "and:", endDate);
+    const results = await db
       .select()
       .from(runs)
       .where(
@@ -105,6 +108,8 @@ export class DatabaseStorage implements IStorage {
           lte(runs.date, endDate)
         )
       );
+    console.log("Found runs:", results);
+    return results;
   }
 }
 
