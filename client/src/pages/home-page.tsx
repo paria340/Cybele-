@@ -85,12 +85,24 @@ export default function HomePage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, date: new Date() }),
       });
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/workouts"] });
+      toast({
+        title: "Workout created successfully!",
+        description: "Your new workout has been added.",
+      });
+      workoutForm.reset();
+    },
+    onError: () => {
+      toast({
+        title: "Error creating workout",
+        description: "Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -138,10 +150,9 @@ export default function HomePage() {
     },
   });
 
-  const onSubmitWorkout = async (data: InsertWorkout) => {
+  const onSubmitWorkout = workoutForm.handleSubmit(async (data) => {
     await createWorkoutMutation.mutateAsync(data);
-    workoutForm.reset();
-  };
+  });
 
   const onSubmitExercise = async (workoutId: number) => {
     const data = exerciseForm.getValues();
