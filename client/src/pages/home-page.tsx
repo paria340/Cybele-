@@ -180,7 +180,7 @@ export default function HomePage() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="space-y-8">
           {/* Workouts Section */}
           <div>
             <div className="flex justify-between items-center mb-8">
@@ -209,7 +209,7 @@ export default function HomePage() {
               </Dialog>
             </div>
 
-            <div className="grid gap-6">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
               {workouts?.map((workout: Workout) => (
                 <WorkoutCard
                   key={workout.id}
@@ -221,76 +221,73 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Running Section */}
-          <div>
-            <h2 className="text-3xl font-bold mb-8">Running Tracker</h2>
-            <div className="grid gap-6">
-              {/* Weekly Statistics */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Weekly Progress</CardTitle>
-                  <CardDescription>Your running stats for this week</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {weeklyStats ? (
-                    <div className="grid gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Total Distance</p>
-                        <p className="text-2xl font-bold">{weeklyStats.totalDistance} km</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Week Range</p>
-                        <p className="text-muted-foreground">
-                          {format(new Date(weeklyStats.startDate), 'MMM d')} - {format(new Date(weeklyStats.endDate), 'MMM d')}
-                        </p>
-                      </div>
+          {/* Running Progress Section */}
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Weekly Statistics */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Weekly Progress</CardTitle>
+                <CardDescription>Your running stats for this week</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {weeklyStats ? (
+                  <div className="grid gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Distance</p>
+                      <p className="text-2xl font-bold">{weeklyStats.totalDistance} km</p>
                     </div>
-                  ) : (
-                    <p>No data available</p>
-                  )}
-                </CardContent>
-              </Card>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Week Range</p>
+                      <p className="text-muted-foreground">
+                        {format(new Date(weeklyStats.startDate), 'MMM d')} - {format(new Date(weeklyStats.endDate), 'MMM d')}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <p>No data available</p>
+                )}
+              </CardContent>
+            </Card>
 
-              {/* Add Run Form */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Log Today's Run</CardTitle>
-                  <CardDescription>Enter the distance you've run</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Form {...runForm}>
-                    <form onSubmit={onSubmitRun} className="space-y-4">
-                      <FormField
-                        control={runForm.control}
-                        name="distance"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Distance (km)</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                step="0.1"
-                                placeholder="Enter distance in kilometers"
-                                {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value))}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button 
-                        type="submit" 
-                        className="w-full"
-                        disabled={addRunMutation.isPending}
-                      >
-                        {addRunMutation.isPending ? "Saving..." : "Log Run"}
-                      </Button>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            </div>
+            {/* Add Run Form */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Log Today's Run</CardTitle>
+                <CardDescription>Enter the distance you've run</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...runForm}>
+                  <form onSubmit={onSubmitRun} className="space-y-4">
+                    <FormField
+                      control={runForm.control}
+                      name="distance"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Distance (km)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.1"
+                              placeholder="Enter distance in kilometers"
+                              {...field}
+                              onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button 
+                      type="submit" 
+                      className="w-full"
+                      disabled={addRunMutation.isPending}
+                    >
+                      {addRunMutation.isPending ? "Saving..." : "Log Run"}
+                    </Button>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>
