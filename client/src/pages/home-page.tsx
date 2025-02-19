@@ -25,7 +25,7 @@ export default function HomePage() {
   const { data: workouts, isLoading: isLoadingWorkouts } = useQuery({
     queryKey: ["/api/workouts"],
     queryFn: async () => {
-      const response = await apiRequest("/api/workouts");
+      const response = await apiRequest("/api/workouts", { method: "GET" });
       return response.json();
     }
   });
@@ -52,6 +52,9 @@ export default function HomePage() {
     mutationFn: async (data: InsertWorkout) => {
       const res = await apiRequest("/api/workouts", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(data),
       });
       return res.json();
@@ -65,6 +68,9 @@ export default function HomePage() {
     mutationFn: async ({ workoutId, exercise }: { workoutId: number; exercise: InsertExercise }) => {
       const res = await apiRequest(`/api/workouts/${workoutId}/exercises`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(exercise),
       });
       return res.json();
@@ -169,7 +175,7 @@ function WorkoutCard({ workout, onAddExercise, exerciseForm }: WorkoutCardProps)
   const { data: exercises } = useQuery({
     queryKey: [`/api/workouts/${workout.id}/exercises`],
     queryFn: async () => {
-      const response = await apiRequest(`/api/workouts/${workout.id}/exercises`);
+      const response = await apiRequest(`/api/workouts/${workout.id}/exercises`, { method: "GET" });
       return response.json();
     }
   });

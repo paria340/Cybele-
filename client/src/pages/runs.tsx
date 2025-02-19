@@ -48,7 +48,12 @@ export default function RunsPage() {
   const weeklyStats = useQuery<WeeklyStats>({
     queryKey: ["/api/runs/week"],
     queryFn: async () => {
-      const response = await apiRequest("/api/runs/week", { method: "GET" });
+      const response = await apiRequest("/api/runs/week", { 
+        method: "GET",
+        headers: {
+          "Accept": "application/json"
+        }
+      });
       return response.json();
     },
   });
@@ -57,6 +62,9 @@ export default function RunsPage() {
     mutationFn: async (data: { distance: number; date: string }) => {
       const response = await apiRequest("/api/runs", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(data),
       });
       return response.json();
