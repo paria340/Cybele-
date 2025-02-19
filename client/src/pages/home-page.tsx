@@ -86,7 +86,7 @@ export default function HomePage() {
         },
         body: JSON.stringify({
           name: data.name,
-          date: data.date.toISOString(),
+          date: format(data.date, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"),
         }),
       });
       return res.json();
@@ -99,10 +99,10 @@ export default function HomePage() {
       });
       workoutForm.reset();
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Error creating workout",
-        description: "Please try again.",
+        description: error.message || "Please try again.",
         variant: "destructive",
       });
     },
