@@ -74,15 +74,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const start = startOfWeek(now);
     const end = endOfWeek(now);
 
-    const runs = await storage.getRuns(req.user.id, start, end);
-    const totalDistance = runs.reduce((sum, run) => sum + run.distance, 0);
+    try {
+      const runs = await storage.getRuns(req.user.id, start, end);
+      // Ensure proper number calculation for total distance
+      const totalDistance = runs.reduce((sum, run) => {
+        const distance = typeof run.distance === 'number' ? run.distance : 0;
+        return sum + distance;
+      }, 0);
 
-    res.json({
-      runs,
-      totalDistance,
-      startDate: start,
-      endDate: end
-    });
+      res.json({
+        runs,
+        totalDistance,
+        startDate: start,
+        endDate: end
+      });
+    } catch (error) {
+      console.error("Error fetching weekly runs:", error);
+      res.status(500).json({ error: "Failed to fetch weekly runs" });
+    }
   });
 
   app.delete("/api/workouts/:workoutId", async (req, res) => {
