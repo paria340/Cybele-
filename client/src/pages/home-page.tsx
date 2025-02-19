@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -11,17 +11,23 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertWorkoutSchema, insertExerciseSchema, type InsertWorkout, type InsertExercise, type Workout, type Exercise } from "@shared/schema";
+import { insertWorkoutSchema, insertExerciseSchema, insertRunSchema, type InsertWorkout, type InsertExercise, type Workout, type Exercise, type Run } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { LogOut, Plus, DumbbellIcon, Loader2 } from "lucide-react";
-import { SiStrava } from "react-icons/si";
 import { format } from "date-fns";
-import { Link } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import type { WeeklyStats } from "@/types";
 
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
+  const { toast } = useToast();
+  const [date] = useState(new Date());
+
+  // Workouts Query
   const { data: workouts, isLoading: isLoadingWorkouts } = useQuery({
     queryKey: ["/api/workouts"],
     queryFn: async () => {
@@ -30,6 +36,21 @@ export default function HomePage() {
     }
   });
 
+  // Weekly Running Stats Query
+  const { data: weeklyStats, isLoading: isLoadingStats } = useQuery<WeeklyStats>({
+    queryKey: ["/api/runs/week"],
+    queryFn: async () => {
+      const response = await apiRequest("/api/runs/week", { 
+        method: "GET",
+        headers: {
+          "Accept": "application/json"
+        }
+      });
+      return response.json();
+    },
+  });
+
+  // Forms
   const workoutForm = useForm<InsertWorkout>({
     resolver: zodResolver(insertWorkoutSchema),
     defaultValues: {
@@ -48,6 +69,15 @@ export default function HomePage() {
     },
   });
 
+  const runForm = useForm({
+    resolver: zodResolver(insertRunSchema),
+    defaultValues: {
+      distance: 0,
+      date: new Date().toISOString(),
+    },
+  });
+
+  // Mutations
   const createWorkoutMutation = useMutation({
     mutationFn: async (data: InsertWorkout) => {
       const res = await apiRequest("/api/workouts", {
@@ -80,6 +110,34 @@ export default function HomePage() {
     },
   });
 
+  const addRunMutation = useMutation({
+    mutationFn: async (data: { distance: number; date: string }) => {
+      const response = await apiRequest("/api/runs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/runs/week"] });
+      toast({
+        title: "Run added successfully!",
+        description: "Your running progress has been updated.",
+      });
+      runForm.reset();
+    },
+    onError: () => {
+      toast({
+        title: "Error adding run",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmitWorkout = async (data: InsertWorkout) => {
     await createWorkoutMutation.mutateAsync(data);
     workoutForm.reset();
@@ -91,7 +149,11 @@ export default function HomePage() {
     exerciseForm.reset();
   };
 
-  if (isLoadingWorkouts) {
+  const onSubmitRun = runForm.handleSubmit((data) => {
+    addRunMutation.mutate(data);
+  });
+
+  if (isLoadingWorkouts || isLoadingStats) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -108,12 +170,6 @@ export default function HomePage() {
             <h1 className="text-2xl font-bold">Cybele</h1>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/runs">
-              <Button variant="outline" className="gap-2">
-                <SiStrava className="h-4 w-4" />
-                Running Tracker
-              </Button>
-            </Link>
             <span>Welcome, {user?.username}</span>
             <Button variant="outline" onClick={() => logoutMutation.mutate()}>
               <LogOut className="h-4 w-4 mr-2" />
@@ -124,51 +180,129 @@ export default function HomePage() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-bold">Your Workouts</h2>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                New Workout
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Workout</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={workoutForm.handleSubmit(onSubmitWorkout)} className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Workout Name</Label>
-                  <Input id="name" {...workoutForm.register("name")} />
-                </div>
-                <Button type="submit" className="w-full">
-                  Create Workout
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Workouts Section */}
+          <div>
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-3xl font-bold">Your Workouts</h2>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Workout
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create New Workout</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={workoutForm.handleSubmit(onSubmitWorkout)} className="space-y-4">
+                    <div>
+                      <Label htmlFor="name">Workout Name</Label>
+                      <Input id="name" {...workoutForm.register("name")} />
+                    </div>
+                    <Button type="submit" className="w-full">
+                      Create Workout
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {workouts?.map((workout: Workout) => (
-            <WorkoutCard
-              key={workout.id}
-              workout={workout}
-              onAddExercise={onSubmitExercise}
-              exerciseForm={exerciseForm}
-            />
-          ))}
+            <div className="grid gap-6">
+              {workouts?.map((workout: Workout) => (
+                <WorkoutCard
+                  key={workout.id}
+                  workout={workout}
+                  onAddExercise={onSubmitExercise}
+                  exerciseForm={exerciseForm}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Running Section */}
+          <div>
+            <h2 className="text-3xl font-bold mb-8">Running Tracker</h2>
+            <div className="grid gap-6">
+              {/* Weekly Statistics */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Weekly Progress</CardTitle>
+                  <CardDescription>Your running stats for this week</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {weeklyStats ? (
+                    <div className="grid gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total Distance</p>
+                        <p className="text-2xl font-bold">{weeklyStats.totalDistance} km</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Week Range</p>
+                        <p className="text-muted-foreground">
+                          {format(new Date(weeklyStats.startDate), 'MMM d')} - {format(new Date(weeklyStats.endDate), 'MMM d')}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p>No data available</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Add Run Form */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Log Today's Run</CardTitle>
+                  <CardDescription>Enter the distance you've run</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Form {...runForm}>
+                    <form onSubmit={onSubmitRun} className="space-y-4">
+                      <FormField
+                        control={runForm.control}
+                        name="distance"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Distance (km)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                placeholder="Enter distance in kilometers"
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button 
+                        type="submit" 
+                        className="w-full"
+                        disabled={addRunMutation.isPending}
+                      >
+                        {addRunMutation.isPending ? "Saving..." : "Log Run"}
+                      </Button>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </main>
     </div>
   );
 }
 
+// WorkoutCard component remains unchanged
 interface WorkoutCardProps {
   workout: Workout;
   onAddExercise: (workoutId: number) => Promise<void>;
-  exerciseForm: any; // TODO: Type this properly with react-hook-form types
+  exerciseForm: any;
 }
 
 function WorkoutCard({ workout, onAddExercise, exerciseForm }: WorkoutCardProps) {
