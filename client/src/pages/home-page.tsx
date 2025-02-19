@@ -20,7 +20,6 @@ import { LogOut, Plus, DumbbellIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import type { WeeklyStats } from "@/types";
 
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
@@ -85,7 +84,10 @@ export default function HomePage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ ...data, date: new Date() }),
+        body: JSON.stringify({
+          name: data.name,
+          date: data.date.toISOString(),
+        }),
       });
       return res.json();
     },
@@ -119,6 +121,10 @@ export default function HomePage() {
     },
     onSuccess: (_, { workoutId }) => {
       queryClient.invalidateQueries({ queryKey: [`/api/workouts/${workoutId}/exercises`] });
+      toast({
+        title: "Exercise added successfully!",
+        description: "Your new exercise has been added to the workout.",
+      });
     },
   });
 
@@ -150,8 +156,8 @@ export default function HomePage() {
     },
   });
 
-  const onSubmitWorkout = workoutForm.handleSubmit(async (data) => {
-    await createWorkoutMutation.mutateAsync(data);
+  const onSubmitWorkout = workoutForm.handleSubmit((data) => {
+    createWorkoutMutation.mutate(data);
   });
 
   const onSubmitExercise = async (workoutId: number) => {
@@ -207,15 +213,26 @@ export default function HomePage() {
                   <DialogHeader>
                     <DialogTitle>Create New Workout</DialogTitle>
                   </DialogHeader>
-                  <form onSubmit={workoutForm.handleSubmit(onSubmitWorkout)} className="space-y-4">
-                    <div>
-                      <Label htmlFor="name">Workout Name</Label>
-                      <Input id="name" {...workoutForm.register("name")} />
-                    </div>
-                    <Button type="submit" className="w-full">
-                      Create Workout
-                    </Button>
-                  </form>
+                  <Form {...workoutForm}>
+                    <form onSubmit={onSubmitWorkout} className="space-y-4">
+                      <FormField
+                        control={workoutForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Workout Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter workout name" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button type="submit" className="w-full">
+                        Create Workout
+                      </Button>
+                    </form>
+                  </Form>
                 </DialogContent>
               </Dialog>
             </div>
