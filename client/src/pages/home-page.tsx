@@ -303,12 +303,58 @@ export default function HomePage() {
               <Card className="p-8 text-center">
                 <CardContent>
                   <p className="text-muted-foreground mb-4">No workouts scheduled for today</p>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Schedule a Workout
-                    </Button>
-                  </DialogTrigger>
+                  <Dialog open={workoutDialogOpen} onOpenChange={setWorkoutDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Schedule a Workout
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Create New Workout</DialogTitle>
+                      </DialogHeader>
+                      <Form {...workoutForm}>
+                        <form onSubmit={onSubmitWorkout} className="space-y-4">
+                          <FormField
+                            control={workoutForm.control}
+                            name="name"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Workout Name</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Enter workout name" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={workoutForm.control}
+                            name="duration"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Duration (minutes)</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number" 
+                                    min="1"
+                                    placeholder="Enter workout duration" 
+                                    {...field}
+                                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <Button type="submit" className="w-full">
+                            Create Workout
+                          </Button>
+                        </form>
+                      </Form>
+                    </DialogContent>
+                  </Dialog>
                 </CardContent>
               </Card>
             ) : (
