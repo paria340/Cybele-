@@ -30,7 +30,7 @@ import {
 import { workoutTypes } from "@shared/schema";
 
 interface RunningStats {
-  runs: Array<{ distance: number; date: string }>;
+  runs: Array<{ distance: number; duration: number; date: string }>;
   totalDistance: number;
   startDate: string;
   endDate: string;
@@ -61,7 +61,7 @@ export default function HomePage() {
   const { data: runningStats, isLoading: isLoadingStats } = useQuery<AllStats>({
     queryKey: ["/api/runs/stats"],
     queryFn: async () => {
-      const response = await apiRequest("/api/runs/stats", { 
+      const response = await apiRequest("/api/runs/stats", {
         method: "GET",
         headers: {
           "Accept": "application/json"
@@ -96,6 +96,7 @@ export default function HomePage() {
     defaultValues: {
       distance: 0,
       date: new Date().toISOString(),
+      duration: 0, // Added duration field
     },
   });
 
@@ -153,9 +154,12 @@ export default function HomePage() {
   });
 
   const addRunMutation = useMutation({
-    mutationFn: async (data: { distance: number; date: string }) => {
+    mutationFn: async (data: { distance: number; duration: number; date: string }) => {
       if (isNaN(data.distance) || data.distance <= 0) {
         throw new Error("Distance must be greater than 0");
+      }
+      if (isNaN(data.duration) || data.duration <= 0) {
+        throw new Error("Duration must be greater than 0");
       }
 
       const response = await apiRequest("/api/runs", {
@@ -165,6 +169,7 @@ export default function HomePage() {
         },
         body: JSON.stringify({
           distance: Math.round(data.distance),
+          duration: Math.round(data.duration),
           date: new Date().toISOString(),
         }),
       });
@@ -221,15 +226,7 @@ export default function HomePage() {
   };
 
   const onSubmitRun = runForm.handleSubmit((data) => {
-    if (isNaN(data.distance) || data.distance <= 0) {
-      toast({
-        title: "Invalid distance",
-        description: "Please enter a valid distance greater than 0.",
-        variant: "destructive",
-      });
-      return;
-    }
-    addRunMutation.mutate(data);
+    addRunMutation.mutate({...data, date: new Date().toISOString()}); //Added date to data
   });
 
   if (isLoadingWorkouts || isLoadingStats) {
@@ -313,10 +310,10 @@ export default function HomePage() {
                           <FormItem>
                             <FormLabel>Duration (minutes)</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="number" 
+                              <Input
+                                type="number"
                                 min="1"
-                                placeholder="Enter workout duration" 
+                                placeholder="Enter workout duration"
                                 {...field}
                                 onChange={(e) => field.onChange(parseInt(e.target.value))}
                               />
@@ -382,10 +379,10 @@ export default function HomePage() {
                               <FormItem>
                                 <FormLabel>Duration (minutes)</FormLabel>
                                 <FormControl>
-                                  <Input 
-                                    type="number" 
+                                  <Input
+                                    type="number"
                                     min="1"
-                                    placeholder="Enter workout duration" 
+                                    placeholder="Enter workout duration"
                                     {...field}
                                     onChange={(e) => field.onChange(parseInt(e.target.value))}
                                   />
@@ -433,6 +430,17 @@ export default function HomePage() {
                       <div>
                         <p className="text-sm text-muted-foreground">Total Distance</p>
                         <p className="text-4xl font-bold">{runningStats.weekly.totalDistance} km</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Average Pace</p>
+                        <p className="text-2xl font-semibold">
+                          {runningStats.weekly.runs.length > 0
+                            ? (
+                                runningStats.weekly.runs.reduce((acc, run) => acc + (run.duration / run.distance), 0) /
+                                runningStats.weekly.runs.length
+                              ).toFixed(2)
+                            : "0"} min/km
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Week Range</p>
@@ -508,32 +516,65 @@ export default function HomePage() {
               <CardContent>
                 <Form {...runForm}>
                   <form onSubmit={onSubmitRun} className="space-y-4">
-                    <FormField
-                      control={runForm.control}
-                      name="distance"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Distance (km)</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              step="1"
-                              min="1"
-                              placeholder="Enter distance in kilometers"
-                              {...field}
-                              onChange={(e) => {
-                                const value = e.target.value ? parseInt(e.target.value) : 0;
-                                field.onChange(value);
-                              }}
-                              value={field.value || ''}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <Button 
-                      type="submit" 
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={runForm.control}
+                        name="distance"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Distance (km)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="1"
+                                min="1"
+                                placeholder="Enter distance in kilometers"
+                                {...field}
+                                onChange={(e) => {
+                                  const value = e.target.value ? parseInt(e.target.value) : 0;
+                                  field.onChange(value);
+                                }}
+                                value={field.value || ''}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={runForm.control}
+                        name="duration"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Duration (minutes)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="1"
+                                min="1"
+                                placeholder="Enter duration in minutes"
+                                {...field}
+                                onChange={(e) => {
+                                  const value = e.target.value ? parseInt(e.target.value) : 0;
+                                  field.onChange(value);
+                                }}
+                                value={field.value || ''}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Pace: {
+                        (runForm.watch("distance") && runForm.watch("duration"))
+                          ? (runForm.watch("duration") / runForm.watch("distance")).toFixed(2)
+                          : "0.00"
+                      } min/km
+                    </div>
+                    <Button
+                      type="submit"
                       className="w-full"
                       disabled={addRunMutation.isPending}
                     >
@@ -578,8 +619,8 @@ function WorkoutCard({ workout, onAddExercise, onDelete, exerciseForm }: Workout
               <div>{workout.duration} minutes</div>
             </div>
           </div>
-          <Button 
-            variant="destructive" 
+          <Button
+            variant="destructive"
             size="icon"
             onClick={onDelete}
           >

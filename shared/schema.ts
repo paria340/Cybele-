@@ -46,6 +46,7 @@ export const runs = pgTable("runs", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   distance: integer("distance").notNull(), // in kilometers
+  duration: integer("duration").notNull(), // in minutes
   date: timestamp("date").notNull(),
 });
 
@@ -75,10 +76,12 @@ export const insertExerciseSchema = createInsertSchema(exercises).pick({
 
 export const insertRunSchema = createInsertSchema(runs).pick({
   distance: true,
+  duration: true,
   date: true,
 }).extend({
   date: z.coerce.date(),
-  distance: z.coerce.number().int().positive()
+  distance: z.coerce.number().int().positive(),
+  duration: z.coerce.number().int().positive()
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
