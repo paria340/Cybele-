@@ -21,6 +21,19 @@ import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
+interface RunningStats {
+  runs: Array<{ distance: number; date: string }>;
+  totalDistance: number;
+  startDate: string;
+  endDate: string;
+}
+
+interface AllStats {
+  weekly: RunningStats;
+  monthly: RunningStats;
+  yearly: RunningStats;
+}
+
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
@@ -36,11 +49,11 @@ export default function HomePage() {
     }
   });
 
-  // Weekly Running Stats Query
-  const { data: weeklyStats, isLoading: isLoadingStats } = useQuery<WeeklyStats>({
-    queryKey: ["/api/runs/week"],
+  // Replace the weekly stats query with the new comprehensive stats query
+  const { data: runningStats, isLoading: isLoadingStats } = useQuery<AllStats>({
+    queryKey: ["/api/runs/stats"],
     queryFn: async () => {
-      const response = await apiRequest("/api/runs/week", { 
+      const response = await apiRequest("/api/runs/stats", { 
         method: "GET",
         headers: {
           "Accept": "application/json"
@@ -150,7 +163,7 @@ export default function HomePage() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/runs/week"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/runs/stats"] });
       toast({
         title: "Run added successfully!",
         description: "Your running progress has been updated.",
@@ -376,7 +389,7 @@ export default function HomePage() {
           </div>
 
           {/* Running Progress Section */}
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
             {/* Weekly Statistics */}
             <Card>
               <CardHeader>
@@ -384,16 +397,68 @@ export default function HomePage() {
                 <CardDescription>Your running stats for this week</CardDescription>
               </CardHeader>
               <CardContent>
-                {weeklyStats ? (
+                {runningStats?.weekly ? (
                   <div className="grid gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Total Distance</p>
-                      <p className="text-2xl font-bold">{weeklyStats.totalDistance} km</p>
+                      <p className="text-2xl font-bold">{runningStats.weekly.totalDistance} km</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Week Range</p>
                       <p className="text-muted-foreground">
-                        {format(new Date(weeklyStats.startDate), 'MMM d')} - {format(new Date(weeklyStats.endDate), 'MMM d')}
+                        {format(new Date(runningStats.weekly.startDate), 'MMM d')} - {format(new Date(runningStats.weekly.endDate), 'MMM d')}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <p>No data available</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Monthly Statistics */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Monthly Progress</CardTitle>
+                <CardDescription>Your running stats for this month</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {runningStats?.monthly ? (
+                  <div className="grid gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Distance</p>
+                      <p className="text-2xl font-bold">{runningStats.monthly.totalDistance} km</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Month</p>
+                      <p className="text-muted-foreground">
+                        {format(new Date(runningStats.monthly.startDate), 'MMMM yyyy')}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <p>No data available</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Yearly Statistics */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Yearly Progress</CardTitle>
+                <CardDescription>Your running stats for this year</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {runningStats?.yearly ? (
+                  <div className="grid gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Distance</p>
+                      <p className="text-2xl font-bold">{runningStats.yearly.totalDistance} km</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Year</p>
+                      <p className="text-muted-foreground">
+                        {format(new Date(runningStats.yearly.startDate), 'yyyy')}
                       </p>
                     </div>
                   </div>
@@ -404,7 +469,7 @@ export default function HomePage() {
             </Card>
 
             {/* Add Run Form */}
-            <Card className="relative">
+            <Card className="md:col-span-3">
               <CardHeader>
                 <CardTitle>Log Today's Run</CardTitle>
                 <CardDescription>Enter the distance you've run</CardDescription>

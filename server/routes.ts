@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertWorkoutSchema, insertExerciseSchema, insertRunSchema } from "@shared/schema";
-import { startOfDay, endOfDay, startOfWeek, endOfWeek, parseISO } from "date-fns";
+import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -24,6 +24,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/runs/stats", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    const now = new Date();
+
+    // Calculate date ranges
+    const weekStart = startOfWeek(now);
+    const weekEnd = endOfWeek(now);
+    const monthStart = startOfMonth(now);
+    const monthEnd = endOfMonth(now);
+    const yearStart = startOfYear(now);
+    const yearEnd = endOfYear(now);
+
+    try {
+      // Fetch runs for different time periods
+      const [weeklyRuns, monthlyRuns, yearlyRuns] = await Promise.all([
+        storage.getRuns(req.user.id, weekStart, weekEnd),
+        storage.getRuns(req.user.id, monthStart, monthEnd),
+        storage.getRuns(req.user.id, yearStart, yearEnd)
+      ]);
+
+      // Calculate statistics
+      const stats = {
+        weekly: {
+          runs: weeklyRuns,
+          totalDistance: weeklyRuns.reduce((sum, run) => sum + (typeof run.distance === 'number' ? run.distance : 0), 0),
+          startDate: weekStart,
+          endDate: weekEnd
+        },
+        monthly: {
+          runs: monthlyRuns,
+          totalDistance: monthlyRuns.reduce((sum, run) => sum + (typeof run.distance === 'number' ? run.distance : 0), 0),
+          startDate: monthStart,
+          endDate: monthEnd
+        },
+        yearly: {
+          runs: yearlyRuns,
+          totalDistance: yearlyRuns.reduce((sum, run) => sum + (typeof run.distance === 'number' ? run.distance : 0), 0),
+          startDate: yearStart,
+          endDate: yearEnd
+        }
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching running statistics:", error);
+      res.status(500).json({ error: "Failed to fetch running statistics" });
+    }
+  });
+
+  // Keep existing routes
   app.get("/api/runs/week", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
@@ -54,6 +105,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Keep other existing routes
   app.post("/api/workouts", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 
