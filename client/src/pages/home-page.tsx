@@ -389,87 +389,88 @@ export default function HomePage() {
           </div>
 
           {/* Running Progress Section */}
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Weekly Statistics */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Weekly Progress</CardTitle>
-                <CardDescription>Your running stats for this week</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {runningStats?.weekly ? (
-                  <div className="grid gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Distance</p>
-                      <p className="text-2xl font-bold">{runningStats.weekly.totalDistance} km</p>
+          <div className="grid gap-6">
+            <div className="grid md:grid-cols-3 gap-6">
+              {/* Weekly Statistics - Larger card */}
+              <Card className="md:col-span-2">
+                <CardHeader>
+                  <CardTitle>Weekly Progress</CardTitle>
+                  <CardDescription>Your running stats for this week</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {runningStats?.weekly ? (
+                    <div className="grid gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total Distance</p>
+                        <p className="text-4xl font-bold">{runningStats.weekly.totalDistance} km</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Week Range</p>
+                        <p className="text-muted-foreground">
+                          {format(new Date(runningStats.weekly.startDate), 'MMM d')} - {format(new Date(runningStats.weekly.endDate), 'MMM d')}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Week Range</p>
-                      <p className="text-muted-foreground">
-                        {format(new Date(runningStats.weekly.startDate), 'MMM d')} - {format(new Date(runningStats.weekly.endDate), 'MMM d')}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <p>No data available</p>
-                )}
-              </CardContent>
-            </Card>
+                  ) : (
+                    <p>No data available</p>
+                  )}
+                </CardContent>
+              </Card>
 
-            {/* Monthly Statistics */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Monthly Progress</CardTitle>
-                <CardDescription>Your running stats for this month</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {runningStats?.monthly ? (
-                  <div className="grid gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Distance</p>
-                      <p className="text-2xl font-bold">{runningStats.monthly.totalDistance} km</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Month</p>
-                      <p className="text-muted-foreground">
-                        {format(new Date(runningStats.monthly.startDate), 'MMMM yyyy')}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <p>No data available</p>
-                )}
-              </CardContent>
-            </Card>
+              {/* Monthly and Yearly Statistics - Smaller cards in a column */}
+              <div className="space-y-6">
+                {/* Monthly Statistics */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Monthly Progress</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {runningStats?.monthly ? (
+                      <div className="space-y-2">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Total Distance</p>
+                          <p className="text-2xl font-bold">{runningStats.monthly.totalDistance} km</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            {format(new Date(runningStats.monthly.startDate), 'MMMM yyyy')}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p>No data available</p>
+                    )}
+                  </CardContent>
+                </Card>
 
-            {/* Yearly Statistics */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Yearly Progress</CardTitle>
-                <CardDescription>Your running stats for this year</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {runningStats?.yearly ? (
-                  <div className="grid gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Distance</p>
-                      <p className="text-2xl font-bold">{runningStats.yearly.totalDistance} km</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Year</p>
-                      <p className="text-muted-foreground">
-                        {format(new Date(runningStats.yearly.startDate), 'yyyy')}
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <p>No data available</p>
-                )}
-              </CardContent>
-            </Card>
+                {/* Yearly Statistics */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg">Yearly Progress</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {runningStats?.yearly ? (
+                      <div className="space-y-2">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Total Distance</p>
+                          <p className="text-2xl font-bold">{runningStats.yearly.totalDistance} km</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            {format(new Date(runningStats.yearly.startDate), 'yyyy')}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p>No data available</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
 
             {/* Add Run Form */}
-            <Card className="md:col-span-3">
+            <Card>
               <CardHeader>
                 <CardTitle>Log Today's Run</CardTitle>
                 <CardDescription>Enter the distance you've run</CardDescription>
@@ -491,10 +492,10 @@ export default function HomePage() {
                               placeholder="Enter distance in kilometers"
                               {...field}
                               onChange={(e) => {
-                                const value = e.target.value ? parseInt(e.target.value, 10) : 0;
+                                const value = e.target.value ? parseInt(e.target.value) : 0;
                                 field.onChange(value);
                               }}
-                              value={field.value || ""}
+                              value={field.value || ''}
                             />
                           </FormControl>
                           <FormMessage />
