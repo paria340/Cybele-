@@ -432,17 +432,6 @@ export default function HomePage() {
                         <p className="text-4xl font-bold">{runningStats.weekly.totalDistance} km</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Average Pace</p>
-                        <p className="text-2xl font-semibold">
-                          {runningStats.weekly.runs.length > 0
-                            ? (
-                                runningStats.weekly.runs.reduce((acc, run) => acc + (run.duration / run.distance), 0) /
-                                runningStats.weekly.runs.length
-                              ).toFixed(2)
-                            : "0"} min/km
-                        </p>
-                      </div>
-                      <div>
                         <p className="text-sm text-muted-foreground">Week Range</p>
                         <p className="text-muted-foreground">
                           {format(new Date(runningStats.weekly.startDate), 'MMM d')} - {format(new Date(runningStats.weekly.endDate), 'MMM d')}
