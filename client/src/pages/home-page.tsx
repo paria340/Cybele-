@@ -55,8 +55,8 @@ export default function HomePage() {
     resolver: zodResolver(insertWorkoutSchema),
     defaultValues: {
       name: "",
-      date: new Date(),
-      duration: 30, // Default to 30 minutes
+      date: new Date(), // Set today's date as default
+      duration: 30,
     },
   });
 
@@ -86,7 +86,10 @@ export default function HomePage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          date: new Date().toISOString(), // Ensure we're using today's date
+        }),
       });
       return res.json();
     },
@@ -97,7 +100,7 @@ export default function HomePage() {
         description: "Your new workout has been added.",
       });
       workoutForm.reset();
-      setWorkoutDialogOpen(false); // Close the dialog after successful creation
+      setWorkoutDialogOpen(false);
     },
     onError: (error) => {
       toast({
