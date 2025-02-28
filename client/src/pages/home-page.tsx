@@ -20,6 +20,14 @@ import { LogOut, Plus, DumbbellIcon, Loader2, Trash as TrashIcon } from "lucide-
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { workoutTypes } from "@shared/schema";
 
 interface RunningStats {
   runs: Array<{ distance: number; date: string }>;
@@ -279,10 +287,21 @@ export default function HomePage() {
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Workout Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter workout name" {...field} />
-                            </FormControl>
+                            <FormLabel>Workout Type</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select a workout type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {workoutTypes.map((type) => (
+                                  <SelectItem key={type} value={type}>
+                                    {type}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -337,10 +356,21 @@ export default function HomePage() {
                             name="name"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>Workout Name</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Enter workout name" {...field} />
-                                </FormControl>
+                                <FormLabel>Workout Type</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select a workout type" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {workoutTypes.map((type) => (
+                                      <SelectItem key={type} value={type}>
+                                        {type}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
                                 <FormMessage />
                               </FormItem>
                             )}

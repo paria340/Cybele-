@@ -2,6 +2,20 @@ import { pgTable, text, serial, integer, timestamp, date } from "drizzle-orm/pg-
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Define workout types enum
+export const workoutTypes = [
+  "Swimming",
+  "Boxing",
+  "Biking",
+  "Rock Climbing",
+  "Yoga",
+  "Running",
+  "Weightlifting",
+  "HIIT",
+  "Pilates",
+  "CrossFit"
+] as const;
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -49,6 +63,7 @@ export const insertWorkoutSchema = createInsertSchema(workouts).pick({
   duration: true,
 }).extend({
   date: z.coerce.date(),
+  name: z.enum(workoutTypes)
 });
 
 export const insertExerciseSchema = createInsertSchema(exercises).pick({
